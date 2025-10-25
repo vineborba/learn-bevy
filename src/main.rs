@@ -17,6 +17,8 @@ fn main() {
         .init_resource::<Score>()
         .init_resource::<StarSpawnTimer>()
         .init_resource::<EnemySpawnTimer>()
+        .init_resource::<HighScores>()
+        .add_message::<GameOverMessage>()
         .add_systems(Startup, spawn_camera)
         .add_systems(Startup, spawn_player)
         .add_systems(Startup, spawn_enemies)
@@ -34,6 +36,9 @@ fn main() {
         .add_systems(Update, tick_enemy_spawn_timer)
         .add_systems(Update, spawn_enemies_over_time)
         .add_systems(Update, exit_game)
+        .add_systems(Update, handle_game_over)
+        .add_systems(Update, update_high_scores)
+        .add_systems(Update, high_scores_updated)
         .run();
 }
 
@@ -215,9 +220,11 @@ pub fn confine_enemy_movement(
 
 pub fn enemy_hit_player(
     mut commands: Commands,
+    mut game_over_message_writer: MessageWriter<GameOverMessage>,
     mut player_query: Query<(Entity, &Transform), With<Player>>,
     enemies_query: Query<&Transform, With<Enemy>>,
     asset_server: Res<AssetServer>,
+    score: Res<Score>,
 ) {
     if let Ok((player, player_transform)) = player_query.single_mut() {
         for enemy_transform in enemies_query.iter() {
@@ -231,6 +238,7 @@ pub fn enemy_hit_player(
                 let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
                 commands.spawn(AudioPlayer::new(sound_effect));
                 commands.entity(player).despawn();
+                game_over_message_writer.write(GameOverMessage { score: score.value });
             }
         }
     }
@@ -278,7 +286,7 @@ pub fn player_hit_star(
             let star_radius = STAR_SIZE / 2.0;
             if distance < player_radius + star_radius {
                 println!("Player collected a star!");
-                score.as_mut().value += 1;
+                score.value += 1;
                 let sound_effect = asset_server.load("audio/laserLarge_000.ogg");
                 commands.spawn(AudioPlayer::new(sound_effect));
                 commands.entity(star).despawn();
@@ -298,6 +306,11 @@ pub fn update_score(score: Res<Score>) {
     }
 }
 
+#[derive(Resource, Default, Debug)]
+pub struct HighScores {
+    pub scores: Vec<(String, u32)>,
+}
+
 #[derive(Resource)]
 pub struct StarSpawnTimer {
     pub timer: Timer,
@@ -312,7 +325,7 @@ impl Default for StarSpawnTimer {
 }
 
 pub fn tick_star_spawn_timer(mut star_spawn_timer: ResMut<StarSpawnTimer>, time: Res<Time>) {
-    star_spawn_timer.as_mut().timer.tick(time.delta());
+    star_spawn_timer.timer.tick(time.delta());
 }
 
 pub fn spawn_stars_over_time(
@@ -351,7 +364,7 @@ impl Default for EnemySpawnTimer {
 }
 
 pub fn tick_enemy_spawn_timer(mut enemy_spawn_timer: ResMut<EnemySpawnTimer>, time: Res<Time>) {
-    enemy_spawn_timer.as_mut().timer.tick(time.delta());
+    enemy_spawn_timer.timer.tick(time.delta());
 }
 
 pub fn spawn_enemies_over_time(
@@ -384,5 +397,31 @@ pub fn exit_game(
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         app_exit_event_writer.write(AppExit::Success);
+    }
+}
+
+#[derive(Message)]
+pub struct GameOverMessage {
+    pub score: u32,
+}
+
+pub fn handle_game_over(mut game_over_message_reader: MessageReader<GameOverMessage>) {
+    for message in game_over_message_reader.read() {
+        println!("Your final score is: {}", message.score);
+    }
+}
+
+pub fn update_high_scores(
+    mut game_over_message_reader: MessageReader<GameOverMessage>,
+    mut high_scores: ResMut<HighScores>,
+) {
+    for message in game_over_message_reader.read() {
+        high_scores.scores.push(("Player".into(), message.score))
+    }
+}
+
+pub fn high_scores_updated(high_scores: Res<HighScores>) {
+    if high_scores.is_changed() {
+        println!("High Schores: {:?}", high_scores);
     }
 }
