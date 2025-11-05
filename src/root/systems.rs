@@ -8,7 +8,7 @@ pub fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Pr
     commands.spawn((
         Camera2d::default(),
         Hdr::default(),
-        Transform::from_xyz(window.width() / 2.0, window.width() / 2.0, 0.0),
+        Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
     ));
 }
 
