@@ -20,3 +20,11 @@ pub fn toggle_simulation(
         }
     }
 }
+
+pub fn pause_simulation(mut next_state: ResMut<NextState<SimulationState>>) {
+    next_state.set(SimulationState::Paused);
+}
+
+pub fn resume_simulation(mut next_state: ResMut<NextState<SimulationState>>) {
+    next_state.set(SimulationState::Running);
+}
