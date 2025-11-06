@@ -25,14 +25,15 @@ pub fn transition_to_game_state(
     }
 }
 
-pub fn transition_to_menu_state(
+pub fn transition_to_main_menu_state(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     app_state: Res<State<AppState>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut next_simulation_state: ResMut<NextState<SimulationState>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyM) && !matches!(app_state.get(), AppState::Menu) {
-        next_app_state.set(AppState::Menu);
+    if keyboard_input.just_pressed(KeyCode::KeyM) && !matches!(app_state.get(), AppState::MainMenu)
+    {
+        next_app_state.set(AppState::MainMenu);
         next_simulation_state.set(SimulationState::Paused);
         println!("Transitioning to Menu state");
     }

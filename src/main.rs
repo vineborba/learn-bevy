@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
 mod game;
-mod menu;
+mod main_menu;
 pub mod root;
 
 use game::GamePlugin;
-use menu::MenuPlugin;
+use main_menu::MainMenuPlugin;
 use root::RootPlugin;
 
 fn main() {
@@ -14,14 +14,14 @@ fn main() {
         .init_state::<AppState>()
         .add_plugins(RootPlugin)
         .add_plugins(GamePlugin)
-        .add_plugins(MenuPlugin)
+        .add_plugins(MainMenuPlugin)
         .run();
 }
 
 #[derive(States, PartialEq, Eq, Debug, Hash, Clone, Copy, Default)]
 pub enum AppState {
     #[default]
-    Menu,
+    MainMenu,
     InGame,
     GameOver,
 }
